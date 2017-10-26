@@ -8,6 +8,7 @@ public class NetworkManager : MonoBehaviour {
 
     public string IP = "localhost";
     public Int32 port = 9966;
+    public static int packetSize = 640; //one row
 
     private TcpClient client;
     private NetworkStream stream;
@@ -30,7 +31,7 @@ public class NetworkManager : MonoBehaviour {
         //will be closed on destroy
     }
 
-    public void echo()
+    public void Echo()
     {
         if (stream == null)
         {
@@ -54,6 +55,29 @@ public class NetworkManager : MonoBehaviour {
         responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytes);
         Debug.Log("Received: " + responseData);
 
+    }
+
+    public Byte[][] RequestHeightMap()
+    {
+        if (stream == null)
+        {
+            Debug.Log("open conection before sending");
+            return null;
+        }
+        Byte[] leadingByte = { 2 };
+
+        Debug.Log("Sending map request");
+        stream.Write(leadingByte, 0, leadingByte.Length);
+
+        Byte[][] packetBuffer = new Byte[480][];
+        for (int i = 0; i< 480; ++i)
+        {
+            //Debug.Log("Receiving row " + i);
+            packetBuffer[i] = new Byte[packetSize];
+            stream.Read(packetBuffer[i], 0, packetSize);
+        }
+        Debug.Log("Received Map");
+        return packetBuffer;
     }
 
     private void OnDestroy()
