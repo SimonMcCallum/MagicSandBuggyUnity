@@ -7,10 +7,12 @@ public class TerrainUpdater : MonoBehaviour {
     NetworkManager netManager;
 
     private float[,] targetHeightMap;
+    private bool freshMap = false;
 
     public void SetHeightMap(float[,] map)
     {
         targetHeightMap = map;
+        freshMap = true;
     }
 
     void Start()
@@ -33,15 +35,18 @@ public class TerrainUpdater : MonoBehaviour {
         */
 
         // set the new height
-        if (targetHeightMap != null)
-            terr.terrainData.SetHeights(0, 0, targetHeightMap);
-        targetHeightMap = null; 
+        if (freshMap == true)
+        {
+            //terr.terrainData.SetHeights(0, 0, targetHeightMap);
+            freshMap = false;
+        }
     }
 
     public void DebugUpdateMap()
     {
         Debug.Log("Requesting Map update");
-        SetHeightMap(ConvertMap(netManager.RequestHeightMap()));
+        terr.terrainData.SetHeights(0, 0, ConvertMap(netManager.RequestHeightMap()));
+        Debug.Log("Updated Map");
     }
 
     static private float[,] ConvertMap(byte[][] mapData)
