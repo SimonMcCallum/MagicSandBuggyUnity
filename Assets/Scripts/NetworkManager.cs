@@ -19,7 +19,6 @@ public class NetworkManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
 	}
 
     public void openConnection()
@@ -61,8 +60,9 @@ public class NetworkManager : MonoBehaviour {
     {
         if (stream == null)
         {
-            Debug.Log("open conection before sending");
-            return null;
+            //Debug.Log("open conection before sending");
+            //return null;
+            openConnection();
         }
         Byte[] leadingByte = { 2 };
 
@@ -74,7 +74,11 @@ public class NetworkManager : MonoBehaviour {
         {
             //Debug.Log("Receiving row " + i);
             packetBuffer[i] = new Byte[packetSize];
-            stream.Read(packetBuffer[i], 0, packetSize);
+            int toRead = packetSize;
+            while (toRead > 0)
+            {
+                toRead -= stream.Read(packetBuffer[i], packetSize - toRead, toRead);
+            }
         }
         Debug.Log("Received Map");
         return packetBuffer;

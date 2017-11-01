@@ -16,6 +16,6 @@ public class ButtonController : MonoBehaviour {
 
     public void SetDummyData()
     {
-        Terrain.activeTerrain.GetComponent<TerrainUpdater>().SetHeightMap(DummyData.GenerateFloatArr(0.05f));
+        Terrain.activeTerrain.GetComponent<TerrainUpdater>().SetTargetHeightMap(DummyData.GenerateFloatArr(0.05f));
     }
 }

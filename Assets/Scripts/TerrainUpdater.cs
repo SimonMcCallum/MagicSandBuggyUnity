@@ -1,18 +1,22 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Threading;
+using System;
 
 public class TerrainUpdater : MonoBehaviour {
     Terrain terr; // terrain to modify 
     NetworkManager netManager;
 
     private float[,] targetHeightMap;
-    private bool freshMap = false;
+    private Thread activeThread = null;
 
-    public void SetHeightMap(float[,] map)
+    public bool nullHighest = false;
+    public bool scaletoFullRange = false;
+
+    public void SetTargetHeightMap(float[,] map)
     {
         targetHeightMap = map;
-        freshMap = true;
     }
 
     void Start()
@@ -23,45 +27,89 @@ public class TerrainUpdater : MonoBehaviour {
 
     void Update()
     {
-        /*
-        if (!networkClient.freshMap)
-            return;
-
-        SetHeightMap(networkClient.getHeightData());
-        networkClient.freshMap = false;
-        /*
-        TODO: smooth out change between heights
-        float[,] heights = terr.terrainData.GetHeights(0,0,hmWidth,hmWidth);
-        */
-
-        // set the new height
-        if (freshMap == true)
+        if (activeThread == null)
         {
-            //terr.terrainData.SetHeights(0, 0, targetHeightMap);
-            freshMap = false;
+            activeThread = new Thread(updateMapDataAsync);
+            activeThread.Start();
+        } else if (activeThread.Join(0)) {
+            activeThread = null;
+            if (targetHeightMap != null)
+                terr.terrainData.SetHeights(0, 0, targetHeightMap);
         }
     }
+
+    private void OnDisable()
+    {
+        if (activeThread != null)
+        {
+            activeThread.Abort();
+        }
+    }
+
+
+
+    public void updateMapDataAsync()
+        // does network request and calculation on the data
+    {
+        try
+        {
+            float[,] freshMap = ConvertMap(netManager.RequestHeightMap());
+            if (freshMap != null) 
+                SetTargetHeightMap(freshMap);
+        } catch (Exception e)
+        {
+            Debug.LogError(e.ToString());
+        }
+    }
+
+    private float[,] ConvertMap(byte[][] mapData)
+    {
+        float[,] map = new float[480, 640];
+
+        float lowest = 1;
+        float highest = 0;
+
+        for (int y = 0; y < 480; ++y)
+        {
+            for (int x = 0; x < 640; ++x)
+            {
+                if (nullHighest && mapData[y][x] == 0)
+                {
+                    map[y, x] = 0;
+                } else
+                {
+                    map[y, x] = 1 - mapData[y][x] / 255f;
+                }
+                lowest = Mathf.Min(lowest, map[y, x]);
+                highest = Mathf.Max(highest, map[y, x]);
+            }
+        }
+
+        if (scaletoFullRange)
+        {
+            //scaling
+            Debug.Log("hi:" + highest + " lo:" + lowest);
+            float diff = highest - lowest;
+            for (int y = 0; y < 480; ++y)
+            {
+                for (int x = 0; x < 640; ++x)
+                {
+                    map[y, x] -= lowest;
+                    map[y, x] *= 2;
+                }
+            }
+        }
+
+
+        return map;
+    }
+
 
     public void DebugUpdateMap()
     {
         Debug.Log("Requesting Map update");
         terr.terrainData.SetHeights(0, 0, ConvertMap(netManager.RequestHeightMap()));
         Debug.Log("Updated Map");
-    }
-
-    static private float[,] ConvertMap(byte[][] mapData)
-    {
-        float[,] map = new float[480, 640];
-
-        for (int y = 0; y < 480; ++y)
-        {
-            for (int x = 0; x < 640; ++x)
-            {
-                map[y, x] = mapData[y][x] / 255f;
-            }
-        }
-
-        return map;
     }
 
 }
