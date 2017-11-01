@@ -17,6 +17,7 @@ public class TerrainUpdater : MonoBehaviour {
 
     public bool nullHighest = false;
     public bool scaletoFullRange = false;
+    public bool smoothAndSpare = true;
     public String playerObjectName = "Car";
 
     public void SetTargetHeightMap(float[,] map)
@@ -68,7 +69,7 @@ public class TerrainUpdater : MonoBehaviour {
         try
         {
             float[,] freshMap = ConvertMap(netManager.RequestHeightMap(),nullHighest,scaletoFullRange);
-            if (targetHeightMap != null)
+            if (targetHeightMap != null && smoothAndSpare)
             {
                 SmoothAndSparePlayerMap(playerPosX, playerPosY, targetHeightMap, freshMap);
             }
@@ -90,12 +91,10 @@ public class TerrainUpdater : MonoBehaviour {
         {
             for (int x = 0; x < 640; ++x)
             {
-                if (nullHighest && mapData[y][x] == 0)
+                map[y, x] = 1 - mapData[y][x] / 255f;
+                if (nullHighest && map[y,x] > 1)
                 {
                     map[y, x] = 0;
-                } else
-                {
-                    map[y, x] = 1 - mapData[y][x] / 255f;
                 }
                 lowest = Mathf.Min(lowest, map[y, x]);
                 highest = Mathf.Max(highest, map[y, x]);
@@ -112,8 +111,8 @@ public class TerrainUpdater : MonoBehaviour {
                 for (int x = 0; x < 640; ++x)
                 {
                     map[y, x] -= lowest;
-                    map[y, x] /= diff;
-                    map[y, x] *= 255;
+                    //map[y, x] /= diff;
+                    map[y, x] *= 1.5f;
                 }
             }
         }
@@ -125,7 +124,7 @@ public class TerrainUpdater : MonoBehaviour {
     private static void SmoothAndSparePlayerMap(int playerX, int playerY, float[,] current, float[,] target)
     {
         int playerSpareRadius = 30;
-        int smoothRadus = 5;
+        int smoothRadus = 3;
 
         //if player on map dont change height around him
         if (0 < playerX && playerX < target.GetLength(1) && 0 < playerY && playerY < target.GetLength(0))
@@ -141,8 +140,9 @@ public class TerrainUpdater : MonoBehaviour {
                 }
             }
         }
-        
+
         //smooth map
+        float[,] buffer = new float[480, 640];
         for (int y = smoothRadus; y < target.GetLength(0)-smoothRadus; y++)
         {
             for (int x = smoothRadus; x < target.GetLength(1)-smoothRadus; x++)
@@ -155,10 +155,17 @@ public class TerrainUpdater : MonoBehaviour {
                         sum += target[y+yoff, x+xoff];
                     }
                 }
-                target[y,x] = sum / Mathf.Pow(smoothRadus*2,2);
+                buffer[y,x] = sum / Mathf.Pow(smoothRadus*2,2);
             }
         }
-    }
+        for (int y = smoothRadus; y < target.GetLength(0) - smoothRadus; y++)
+        {
+            for (int x = smoothRadus; x < target.GetLength(1) - smoothRadus; x++)
+            {
+                target[y, x] = buffer[y, x];
+            }
+        }
+            }
 
     //returns [x,y]
     private int[] GetPlayerPositionOnTerrain()
