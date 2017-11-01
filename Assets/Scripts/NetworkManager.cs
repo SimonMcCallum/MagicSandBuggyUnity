@@ -66,7 +66,7 @@ public class NetworkManager : MonoBehaviour {
         }
         Byte[] leadingByte = { 2 };
 
-        Debug.Log("Sending map request");
+        //Debug.Log("Sending map request");
         stream.Write(leadingByte, 0, leadingByte.Length);
 
         Byte[][] packetBuffer = new Byte[480][];
@@ -80,7 +80,7 @@ public class NetworkManager : MonoBehaviour {
                 toRead -= stream.Read(packetBuffer[i], packetSize - toRead, toRead);
             }
         }
-        Debug.Log("Received Map");
+        //Debug.Log("Received Map");
         return packetBuffer;
     }
 
