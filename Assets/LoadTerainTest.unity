@@ -1228,9 +1228,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e2d3d90052e5804d9dad052d9bcb908, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nullHighest: 0
-  scaletoFullRange: 0
-  smoothAndSpare: 0
+  nullHighest: 1
+  scaletoFullRange: 1
+  smoothAndSpare: 1
   playerObjectName: Car
 --- !u!1 &1443779539
 GameObject:

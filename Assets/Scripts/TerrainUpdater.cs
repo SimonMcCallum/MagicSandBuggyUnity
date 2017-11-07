@@ -92,11 +92,11 @@ public class TerrainUpdater : MonoBehaviour {
             for (int x = 0; x < 640; ++x)
             {
                 map[y, x] = 1 - mapData[y][x] / 255f;
-                if (nullHighest && map[y,x] > 1)
-                {
-                    map[y, x] = 0;
-                }
                 lowest = Mathf.Min(lowest, map[y, x]);
+                if (nullHighest && map[y,x] >= 1f)
+                {
+                    map[y, x] = 0.5f;
+                }
                 highest = Mathf.Max(highest, map[y, x]);
             }
         }
@@ -104,15 +104,15 @@ public class TerrainUpdater : MonoBehaviour {
         if (scaletoFullRange)
         {
             //scaling
-            Debug.Log("hi:" + highest + " lo:" + lowest);
+            //Debug.Log("hi:" + highest + " lo:" + lowest);
             float diff = highest - lowest;
             for (int y = 0; y < 480; ++y)
             {
                 for (int x = 0; x < 640; ++x)
                 {
                     map[y, x] -= lowest;
-                    //map[y, x] /= diff;
-                    map[y, x] *= 1.5f;
+                    map[y, x] /= diff;
+                    //map[y, x] *= 2f;
                 }
             }
         }
