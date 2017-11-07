@@ -4,7 +4,8 @@ using UnityEngine;
 using System.Threading;
 using System;
 
-public class TerrainUpdater : MonoBehaviour {
+public class TerrainUpdater : MonoBehaviour
+{
     Terrain terr; // terrain to modify 
     NetworkManager netManager;
     Transform player;
@@ -30,7 +31,7 @@ public class TerrainUpdater : MonoBehaviour {
         terr = Terrain.activeTerrain;
         netManager = GameObject.FindObjectOfType<NetworkManager>();
         player = GameObject.Find(playerObjectName).transform;
-        
+
     }
 
     void Update()
@@ -50,7 +51,7 @@ public class TerrainUpdater : MonoBehaviour {
                 terr.terrainData.SetHeights(0, 0, targetHeightMap);
             }
         }
-        
+
     }
 
     private void OnDisable()
@@ -68,19 +69,20 @@ public class TerrainUpdater : MonoBehaviour {
     {
         try
         {
-            float[,] freshMap = ConvertMap(netManager.RequestHeightMap(),nullHighest,scaletoFullRange);
+            float[,] freshMap = ConvertMap(netManager.RequestHeightMap(), nullHighest, scaletoFullRange);
             if (targetHeightMap != null && smoothAndSpare)
             {
                 SmoothAndSparePlayerMap(playerPosX, playerPosY, targetHeightMap, freshMap);
             }
             SetTargetHeightMap(freshMap);
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
             Debug.LogError(e.ToString());
         }
     }
 
-    private static float[,] ConvertMap(byte[][] mapData, bool nullHighest,bool scaletoFullRange)
+    private static float[,] ConvertMap(byte[][] mapData, bool nullHighest, bool scaletoFullRange)
     {
         float[,] map = new float[480, 640];
 
@@ -93,7 +95,7 @@ public class TerrainUpdater : MonoBehaviour {
             {
                 map[y, x] = 1 - mapData[y][x] / 255f;
                 lowest = Mathf.Min(lowest, map[y, x]);
-                if (nullHighest && map[y,x] >= 1f)
+                if (nullHighest && map[y, x] >= 1f)
                 {
                     map[y, x] = 0.5f;
                 }
@@ -143,19 +145,19 @@ public class TerrainUpdater : MonoBehaviour {
 
         //smooth map
         float[,] buffer = new float[480, 640];
-        for (int y = smoothRadus; y < target.GetLength(0)-smoothRadus; y++)
+        for (int y = smoothRadus; y < target.GetLength(0) - smoothRadus; y++)
         {
-            for (int x = smoothRadus; x < target.GetLength(1)-smoothRadus; x++)
+            for (int x = smoothRadus; x < target.GetLength(1) - smoothRadus; x++)
             {
                 float sum = 0;
                 for (int xoff = -smoothRadus; xoff < smoothRadus; xoff++)
                 {
                     for (int yoff = -smoothRadus; yoff < smoothRadus; yoff++)
                     {
-                        sum += target[y+yoff, x+xoff];
+                        sum += target[y + yoff, x + xoff];
                     }
                 }
-                buffer[y,x] = sum / Mathf.Pow(smoothRadus*2,2);
+                buffer[y, x] = sum / Mathf.Pow(smoothRadus * 2, 2);
             }
         }
         for (int y = smoothRadus; y < target.GetLength(0) - smoothRadus; y++)
@@ -165,7 +167,7 @@ public class TerrainUpdater : MonoBehaviour {
                 target[y, x] = buffer[y, x];
             }
         }
-            }
+    }
 
     //returns [x,y]
     private int[] GetPlayerPositionOnTerrain()
@@ -177,13 +179,13 @@ public class TerrainUpdater : MonoBehaviour {
         float mapPlayerY = (worldPlayerY / terr.terrainData.size.z) * terr.terrainData.heightmapResolution;
         float mapPlayerX = (worldPlayerX / terr.terrainData.size.x) * terr.terrainData.heightmapResolution;
 
-        return new int[] { (int)mapPlayerX, (int)mapPlayerY};
+        return new int[] { (int)mapPlayerX, (int)mapPlayerY };
     }
 
     public void DebugUpdateMap()
     {
         Debug.Log("Requesting Map update");
-        terr.terrainData.SetHeights(0, 0, ConvertMap(netManager.RequestHeightMap(),false,false));
+        terr.terrainData.SetHeights(0, 0, ConvertMap(netManager.RequestHeightMap(), false, false));
         Debug.Log("Updated Map");
     }
 
