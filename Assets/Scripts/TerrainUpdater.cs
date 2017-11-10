@@ -93,7 +93,7 @@ public class TerrainUpdater : MonoBehaviour
         {
             for (int x = 0; x < 640; ++x)
             {
-                map[y, x] = 1 - mapData[y][x] / 255f;
+                map[y, x] = 1 - mapData[479-y][x] / 255f;
                 lowest = Mathf.Min(lowest, map[y, x]);
                 if (nullHighest && map[y, x] >= 1f)
                 {
