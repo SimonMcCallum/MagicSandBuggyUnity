@@ -94,6 +94,12 @@ public class NetworkManager : MonoBehaviour {
 
     public void sendCarPos(int x, int y)
     {
+        //translate int to summed bytes
+        if (x > 640 || y > 480) //out of scope
+        {
+            return;
+        }
+
         if (streamCar == null)
         {
             openConnection();
@@ -102,34 +108,31 @@ public class NetworkManager : MonoBehaviour {
         Byte[] data = new Byte[6];
         data[0] = 2; //leading byte see server doc for protocoll
 
-        //translate int to summed bytes
-        if (!(x < 640 || y < 480)) //out of scope
+        for (int i = 1; i < 4; i++)
         {
-            for (int i = 0; i < 3; i++)
+            if (x > 255)
             {
-                if (x > 255)
-                {
-                    data[i] = 255;
-                    x -= 255;
-                } else
-                {
-                    data[i] = (byte)x;
-                    x = 0;
-                }
-            }
-            for (int i = 0; i < 2; i++)
+                data[i] = 255;
+                x -= 255;
+            } else
             {
-                if (y > 255)
-                {
-                    data[i+3] = 255;
-                    y -= 255;
-                }
-                else
-                {
-                    data[i+3] = (byte)x;
-                    y = 0;
-                }
+                data[i] = (byte)x;
+                x = 0;
             }
+        }
+        for (int i = 4; i < 6; i++)
+        {
+            if (y > 255)
+            {
+                data[i] = 255;
+                y -= 255;
+            }
+            else
+            {
+                data[i] = (byte)y;
+                y = 0;
+            }
+            
         }
 
         streamCar.Write(data, 0, data.Length);

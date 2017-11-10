@@ -6,22 +6,23 @@ public class CarPosSender : MonoBehaviour {
 
     public float updateInterval = 0.5f;
 
-
+    TerrainUpdater tu;
     NetworkManager networkManager;
     float lastUpdate = 0;
 
 	// Use this for initialization
 	void Start () {
         networkManager = GameObject.FindObjectOfType<NetworkManager>();
+        tu = GameObject.FindObjectOfType<TerrainUpdater>();
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		if (lastUpdate + updateInterval < Time.time)
         {
-            Vector3 pos = gameObject.transform.position;
+            int[] pos = tu.GetPlayerPositionOnTerrain();
 
-            networkManager.sendCarPos((int)pos.x, (int)pos.y);
+            networkManager.sendCarPos(pos[0], pos[1]);
 
             lastUpdate = Time.time;
         }

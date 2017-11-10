@@ -169,8 +169,8 @@ public class TerrainUpdater : MonoBehaviour
         }
     }
 
-    //returns [x,y]
-    private int[] GetPlayerPositionOnTerrain()
+    /*returns [x,y]*/
+    public int[] GetPlayerPositionOnTerrain()
     {
         //the following variables are relative to the heightmap coordinate system
         float worldPlayerY = player.position.z;
