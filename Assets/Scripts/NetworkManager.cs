@@ -8,10 +8,13 @@ public class NetworkManager : MonoBehaviour {
 
     public string IP = "localhost";
     public Int32 port = 9966;
+    public Int32 portCar = 9967;
     public static int packetSize = 640; //one row
 
     private TcpClient client;
     private NetworkStream stream;
+    private TcpClient clientCar;
+    private NetworkStream streamCar;
 
     // Use this for initialization
     void Start () {
@@ -27,6 +30,11 @@ public class NetworkManager : MonoBehaviour {
         client = new TcpClient(IP, port);
         // Get a client stream for reading and writing.
         stream = client.GetStream();
+        //will be closed on destroy
+        Debug.Log("Trying to Open a Connection to " + IP + ":" + portCar);
+        clientCar = new TcpClient(IP, portCar);
+        // Get a client stream for reading and writing.
+        streamCar = clientCar.GetStream();
         //will be closed on destroy
     }
 
@@ -82,6 +90,49 @@ public class NetworkManager : MonoBehaviour {
         }
         //Debug.Log("Received Map");
         return packetBuffer;
+    }
+
+    public void sendCarPos(int x, int y)
+    {
+        if (streamCar == null)
+        {
+            openConnection();
+        }
+
+        Byte[] data = new Byte[6];
+        data[0] = 2; //leading byte see server doc for protocoll
+
+        //translate int to summed bytes
+        if (!(x < 640 || y < 480)) //out of scope
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                if (x > 255)
+                {
+                    data[i] = 255;
+                    x -= 255;
+                } else
+                {
+                    data[i] = (byte)x;
+                    x = 0;
+                }
+            }
+            for (int i = 0; i < 2; i++)
+            {
+                if (y > 255)
+                {
+                    data[i+3] = 255;
+                    y -= 255;
+                }
+                else
+                {
+                    data[i+3] = (byte)x;
+                    y = 0;
+                }
+            }
+        }
+
+        streamCar.Write(data, 0, data.Length);
     }
 
     private void OnDestroy()
