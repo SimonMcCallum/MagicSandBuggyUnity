@@ -95,8 +95,11 @@
 % *****                    Inhalt                        *****
 % ************************************************************
 
+\tableofcontents
+\newpage
+
 \section{Introduction}
-This is a report about my project work in the course IMT4888 Specialisation in Game Technology. I have never written a report like this in my study career and I hope I meet the expectations. 
+This is a report about my project work in the course IMT4888 Specialisation in Game Technology. I have never written a report like this in my study career before and I hope I meet the expectations. 
 
 The aim of this project was to build upon the results of Skotvold, Somby, M´Hamed, Lecoq and extend it to a full multi-player Virtual Reality(VR) / real sandbox game. The main vision was a cooperative racing game with a changing racetrack. One player is in VR driving a car around in a landscape. The landscape is based of the height profile of a real world sandbox. Another player or a group of players are at the sandbox and manipulate the sand. Changes in the real world sand are reflected by the in-game landscape at runtime. The position of the car and other race track elements along with the height profile are projected onto the sand. The aim of the game is to allow the driver to perform specific maneuvers. For example, if the current objective is to jump a long distance. The sandbox players have to form a hill with a long enough runway in-front of it to allow the driving player jump with enough speed off the hill.  
 
@@ -135,19 +138,19 @@ In addition to the actual server a dummy server was build. It is basically a sta
 \begin{figure}
 	\centering
 	\includegraphics[width=0.8\linewidth]{figures/sandboxHeightShade}
-	\caption{Rendered height map on the client using a height color shader}
+	\caption{Rendered height map on the client using a height color shader. The vertical lines in the terrain are an artifact of the sandbox application, possibly cause by the too low resolution of the \textit{Kinnect}.}
 	\label{fig:sandboxheightshade}
 \end{figure}
 
 \subsection{Client}
-The client is written in c++ and uses the \textit{Unity} engine. Initially it was planed to use the \textit{Unreal} engine. However, it was not possible to modify terrain at runtime with it. \textit{Unity}, on the other hand, implemented this feature may versions ago. 
+The client is written in c\# and uses the \textit{Unity} engine. For the network capabilities standard library \textit{.NET} TCP functionality was used. Initially it was planed to use the \textit{Unreal} engine. However, it was not possible to modify terrain at runtime with it. \textit{Unity}, on the other hand, implemented this feature may versions ago. 
 
 \textit{Unreal}s example vehicle implementation was more usable for this scenario since it was a sand buggy and served as inspiration for the project name. But because of the previous mentioned reason \textit{Unity} had to be used and with it its example vehicle implementation. Unfortunately, this was a street car with skid mark animations and screeching sounds. Consequently, the driving performance on the bumpy sand surface was poor. A lift of the car's body and colliders along with an increase in the range of the wheel's suspension improved that performance to acceptable levels. (also see Figure \ref{fig:streetcarbuggy}) There was not enough time/manpower to build proper car physics.   
 
 \begin{figure}
 	\centering
 	\includegraphics[width=0.7\linewidth]{figures/streetcarbuggy}
-	\caption{\textit{Unity}'s demo car adjusted for desert use. The vertical lines in the terrain are an artifact of the sandbox application, possibly cause by the too low resolution of the \textit{Kinnect}.}
+	\caption{\textit{Unity}'s demo car adjusted for desert use.}
 	\label{fig:streetcarbuggy}
 \end{figure}
 
@@ -166,14 +169,18 @@ To test the game in VR, the VR assets were downloaded from the \textit{Unity Ass
 
 \subsection{Protocol}
 \label{ch:protocol}
+The used protocol to transmit the height map were an adaptation of the one used in the previous work. But instead of sending chars of digits the full range of a byte was used and the header shrunk to a single leading byte. In addition to that there was a similar protocol for the transmission of the player's car position.  
+Both protocols only support maps of the size 640 times 480 pixel/units.
 
+\subsubsection{Height Map Protocol}
+To request map data from the server the client sends a single byte, called leading byte in the code comments, containing the number "2" at port 9966 over TCP. Upon receiving this byte, the server transforms the float height values of the height map into the range 0 to 255. Now fitting into a byte, the height values are send row by row over the network. On the other end, the client receives the values, puts the map together and processes it. 
 
-too fast -> people are visible in the sand
+Since nearly only raw data is send over the network each request cost only $640*480b+1b=300kb$ payload data. Using a powerful linux mint machine as server, my 2-physical-cored Laptop as client and wifi I was able to see changes in the sand in nearly real time. Therefore, I did not conducted a further analysis of the transmission times. For the game this speed is even problematic since heads or arms of the sandbox players, while they are sculpting the sand, are transmitted to the client and rendered into the sand. Thereby, very suddenly appearing, steep and high hills are created which may confuse the driving player.
 
+In addition the the height map request the server may echo a message for debug purposes. A 256 byte long ASCII message preceded by a byte with "1" encoded in it will be returned without the leading byte if the server works correctly.
 
-
-using two ports was mistake but no time to fix,
-maybe not
+\subsubsection{Car Position Protocol}
+As time was running out this protocol is a fast copy of the previous one. Port 9967 is used to allow transmission of map data and updates of the car's position simultaneously. The client sends every 500ms 5 bytes containing the cars position preceded by a byte with "2". As I did not want to bother with sizes of integer and floats between linux, windows, c++ and c\# and endian conventions of the underlying frameworks \textit{.NET} and \textit{openframeworks} I simply encoded the position values as the sums of 3 and 2 bytes. I had already created functionality which got me the players position projected into height map texture coordinates. So I got x coordinates ranging from 0 to 640 and y coordinates ranging from 0 to 480. In the message the x value is sum of the first thee bytes, thereby having a possible range of 0 to $255*3=765$, and the y value is the sum of the last two values with a range from 0 to $255*2=510$.
 
 \subsection{Repositories}
 All modules used \textit{git} as version control. The servers are \textit{openframeorks} apps and need to be put in the corresponding folder to work correctly.
