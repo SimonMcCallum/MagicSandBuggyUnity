@@ -1,4 +1,4 @@
-\documentclass[12pt,a4paper,twoside,titlepage,headsepline,numbers=noenddot,listof=totoc,index=totoc,bibliography=totoc,ngerman]{scrartcl}
+\documentclass[12pt,a4paper,twoside,titlepage,headsepline,numbers=noenddot,listof=totoc,index=totoc,bibliography=totoc]{scrartcl}
 
 
 \ifx\pdfoutput\undefined
@@ -13,7 +13,6 @@
 
 \usepackage{amsfonts}
 \usepackage{algorithmic}
-\usepackage{bibgerm}
 \usepackage{url}
 \usepackage{color}
 \usepackage{tabularx}
@@ -66,7 +65,7 @@
 \thispagestyle{empty}
 \begin{center}
 
-		\includegraphics[width=12cm]{uni-logo}\\
+		\includegraphics[width=12cm]{figures/uni-logo}\\
                      
   \vspace{4cm}
 		{\LARGE  \textbf{Report}} \\ 
@@ -123,26 +122,47 @@ The project had the same structure as the previous one. It was split into client
 As mentioned before was the server an extra module of the sandbox application. It fit into the structure just like some of the games which were already implemented. It used the offered facilities of the \textit{Magic Sand} software without requiring any changes to the core functionality of the application. As the base software was written in C++ the server was written in C++, too.
 
 
-using image filtering 
 
+The height data was extracted from a filtered image of the \textit{Kinect} depth sensors. The filtering was done by \textit{Magic Sand}. After some testing it was obvious that the data was wrong by a non constant offset. Besides the height height image, the used facility offered a base plane equation. If this base plane was added to the data the offset vanished and the rendered surface resembled the actual sand surface. Sadly, it was not clear in which range the values of the height map and base plane resided in. But I guessed and scaled the baseplane height by half of its offset and the results looked very accurate. (see Figure \ref{fig:sandboxheightshade})
 
-baseplane + height = true height 
-not shure about texture values scale to baseplane -> guessed half offset of baseplane offset and seems to work really well
+The projection of the car on the sand surface was done alike to the drawing of fishes and rabbits of one of the pre-implemented games. Thanks to the good structure of \textit{Magic Sand} it was easy to learn how it was done and easy to adapt to my use. Currently, the player's car is represented by a simple dot. But I am very confident that this can be easily extended to a vector drawing or even sprite using \textit{openframeworks} capabilities. 
+
+In addition to the actual server a dummy server was build. It is basically a standalone version of the actual server and serves a simple $sin$ wave patter which changes over time. First it was used to test the, later explained, protocol. After the transaction were stable, it allowed me to continue the development of the client independent of the sandbox. Another reason for the relatively high maturity of this dummy application was that the idea of a sandbox game jam was considered. At such an event, not every team would have constant access to the sandbox but it still needs something to test their code against.
+
+\TODO{picture of dummy server out put}
+\TODO{picture of offset error}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.8\linewidth]{figures/sandboxHeightShade}
+	\caption{Rendered height map on the client using a height color shader}
+	\label{fig:sandboxheightshade}
+\end{figure}
 
 \subsection{Client}
-unity
-c\#
+The client is written in c++ and uses the \textit{Unity} engine. Initially it was planed to use the \textit{Unreal} engine. However, it was not possible to modify terrain at runtime with it. \textit{Unity}, on the other hand, implemented this feature may versions ago. 
 
-Vr simply import into unity from asset store and go  
+\textit{Unreal}s example vehicle implementation was more usable for this scenario since it was a sand buggy and served as inspiration for the project name. But because of the previous mentioned reason \textit{Unity} had to be used and with it its example vehicle implementation. Unfortunately, this was a street car with skid mark animations and screeching sounds. Consequently, the driving performance on the bumpy sand surface was poor. A lift of the car's body and colliders along with an increase in the range of the wheel's suspension improved that performance to acceptable levels. (also see Figure \ref{fig:streetcarbuggy}) There was not enough time/manpower to build proper car physics.   
 
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\linewidth]{figures/streetcarbuggy}
+	\caption{\textit{Unity}'s demo car adjusted for desert use. The vertical lines in the terrain are an artifact of the sandbox application, possibly cause by the too low resolution of the \textit{Kinnect}.}
+	\label{fig:streetcarbuggy}
+\end{figure}
 
-default car physisc made for street driving
-heightend body and increased dampening to improve behavior
-smothing and spare
+To improve the driving experience further the sand terrain was smoothed by a simple median filter. In the same step the region around the car was protected from change. This was done to avoid having an update move the terrain which was under the car above it and causing the car to fall through the map.
 
-null max height
-scale to max level
-not useable in action
+Other filters which could be turned on allowed to reduce heights which were at the maximum level and scale the height map to the full range. In the early phases of the project the sand surface was not as pronounced as desired. This was especially true since the base plane offset error (mentioned in the previous chapter) was not discovered. To counter this, I introduced a filter that measured the highest and lowest point in the height map and scaled the map in such a way that those points resided at the highest and lowest point possible of the terrain object. Initially, this worked not as desired since everything that was out of \textit{Magic Sand}'s region of interest was set to the highest value. Reducing those values allowed the rescaling to achieve the desired effect. However, caution needed to applied since setting those values to zero simply would have turned the problem on its head. 
+
+After the offset error was discovered and fixed, those filters were less needed. But still they help to produce more pronounced looking landscapes. Later it turned out that they are unsuited for use in an actual game scenario. During the game the height of the lowest and highest points change constantly and, even worse, sometimes the body parts of the sandbox players are recognized as high height parts of the sand surface thereby the scaling is constantly changing and the rendered surface feels very unstable for the driving player.
+
+\TODO{pictures of (un)scaled/nulled}
+
+For a proof-of-concept back-projection which will be later discussed in chapter \ref{ch:backProjection} a height color shader hat to be implemented. The height of the terrain was used as hue value of a color in the HSL color model. This color was then translated to RGB and used to paint the corresponding point on the terrain texture. An example can be seen in figure \ref{fig:sandboxheightshade}.
+
+To test the game in VR, the VR assets were downloaded from the \textit{Unity Asset Store} and put into the game. They worked without an issue and allowed to take a first glimpse of how a finished game may look. 
+ 
 
 \subsection{Protocol}
 \label{ch:protocol}
@@ -150,6 +170,24 @@ not useable in action
 
 too fast -> people are visible in the sand
 
+
+
+using two ports was mistake but no time to fix,
+maybe not
+
+\subsection{Repositories}
+All modules used \textit{git} as version control. The servers are \textit{openframeorks} apps and need to be put in the corresponding folder to work correctly.
+
+\begin{itemize}
+	\item The \textit{git} repository of the server can be found at:\\ \url{https://github.com/moreApi/Magic-Sand-Buggy}
+	\item The \textit{git} repository of the dummy server can be found at:\\ \url{https://github.com/moreApi/OfServerTest}
+	\item The \textit{git} repository of the client can be found at:\\ \url{https://github.com/moreApi/MagicSandBuggyUnity}
+\end{itemize}
+
+\section{Discussion}
+
+\subsection{Back-Projection}
+\label{ch:backProjection}
 streaming unity cam not doable in time
 two camera approach - single client
 different textures for terrain -> different render runs
@@ -157,11 +195,6 @@ streaming camera out of unity to streaming service is hard and not openly done b
 two client solution
 the whole game was build in single player
 not enouth experience to split it in short time
-
-using two ports was mistake but no time to fix,
-maybe not
-
-\section{Discussion}
 
 \subsection{Improvements}
 Was only a single person
