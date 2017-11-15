@@ -117,14 +117,12 @@ The previous work was created for the fulfillment of a bachelor level course's r
 When the setup was switched from \textit{AR Sandbox} to \textit{Magic Sand}, I decided to abandon the previous project and write my own implementation. I had to do that for the unity party anyway and it would have been more work to understand the existing server and adapt it to \textit{Magic Sand} that to write it anew. Furthermore \textit{openframeworks} offered an TCP server implementation so half of the server was already done. I kept the general protocol structure but more on that in chapter \ref{ch:protocol}.
 
 
-\section{Method}
+\section{Method and Results}
 The project had the same structure as the previous one. It was split into client and server. The server was an extension to the sandbox software with the main task of extracting and sending the height data. In addition to that, the server had to receive and render the position of the car back onto the sand in this project. The client had to request height data, sculpt terrain according to it, take user inputs, run a racing game and send the position of the car back to the server.
 
 
 \subsection{Server}
 As mentioned before was the server an extra module of the sandbox application. It fit into the structure just like some of the games which were already implemented. It used the offered facilities of the \textit{Magic Sand} software without requiring any changes to the core functionality of the application. As the base software was written in C++ the server was written in C++, too.
-
-
 
 The height data was extracted from a filtered image of the \textit{Kinect} depth sensors. The filtering was done by \textit{Magic Sand}. After some testing it was obvious that the data was wrong by a non constant offset. Besides the height height image, the used facility offered a base plane equation. If this base plane was added to the data the offset vanished and the rendered surface resembled the actual sand surface. Sadly, it was not clear in which range the values of the height map and base plane resided in. But I guessed and scaled the baseplane height by half of its offset and the results looked very accurate. (see Figure \ref{fig:sandboxheightshade})
 
@@ -180,7 +178,7 @@ Since nearly only raw data is send over the network each request cost only $640*
 In addition the the height map request the server may echo a message for debug purposes. A 256 byte long ASCII message preceded by a byte with "1" encoded in it will be returned without the leading byte if the server works correctly.
 
 \subsubsection{Car Position Protocol}
-As time was running out this protocol is a fast copy of the previous one. Port 9967 is used to allow transmission of map data and updates of the car's position simultaneously. The client sends every 500ms 5 bytes containing the cars position preceded by a byte with "2". As I did not want to bother with sizes of integer and floats between linux, windows, c++ and c\# and endian conventions of the underlying frameworks \textit{.NET} and \textit{openframeworks} I simply encoded the position values as the sums of 3 and 2 bytes. I had already created functionality which got me the players position projected into height map texture coordinates. So I got x coordinates ranging from 0 to 640 and y coordinates ranging from 0 to 480. In the message the x value is sum of the first thee bytes, thereby having a possible range of 0 to $255*3=765$, and the y value is the sum of the last two values with a range from 0 to $255*2=510$.
+As time was running out this protocol is a fast copy of the previous one. Port 9967 is used to allow transmission of map data and updates of the car's position simultaneously. The client sends every 500ms five bytes containing the cars position preceded by a byte with "2". As I did not want to bother with sizes of integer and floats between linux, windows, c++ and c\# and endian conventions of the underlying frameworks \textit{.NET} and \textit{openframeworks} I simply encoded the position values as the sums of three or two bytes. I had already created functionality which got me the players position projected into height map texture coordinates. So I got x coordinates ranging from 0 to 640 and y coordinates ranging from 0 to 480. In the message the x value is sum of the first thee bytes, thereby having a possible range of 0 to $255*3=765$, and the y value is the sum of the last two values with a range from 0 to $255*2=510$.
 
 \subsection{Repositories}
 All modules used \textit{git} as version control. The servers are \textit{openframeorks} apps and need to be put in the corresponding folder to work correctly.
@@ -192,6 +190,24 @@ All modules used \textit{git} as version control. The servers are \textit{openfr
 \end{itemize}
 
 \section{Discussion}
+In my personal opinion I would say that this project went quite well considering the mid-development technology change, the resulting inusability of the previous work and consequent rewrite of it and the fact that it was a single person project. Nonetheless I would also say, that the switch to \textit{Magic Sand} was a smart move, because the continued work with \textit{AR Sandbox} would have not be beneficial to the project's progress and my mental health. 
+
+As the time of writing the project is a working proof-of-concept of a multiplayer sand/VR game. Changes of the real world sand in the sandbox are reflected by the in-game sand in nearly real time. The VR player is able to drive around on the sand and the sandbox players can see the cars position in the sandbox. Actual gameplay besides this free driving is not implemented.  
+
+\subsection{Improvements}
+Most of the actual game features were implemented in the last three weeks before the hand-in. I would assume that if the deadline would have been a week or month later the project would have matured over the proof-of-concept status. Then again, students are notoriously bad at time management and I probably would reach the same result but a week later. However, I still have to do a Feature Jam for another course and I plan to do it on this project. Therefore, I compiled a short list of features and improvements I think are worthwhile to look into whether by me or someone else: 
+
+\begin{description}
+	\item[Back-Projection] Currently the information flow from the client to the server is very rudimentary. Only the car's position is transmitted and presented. This needs to be addressed. A detailed discussion of this will be conducted in the next chapter. 
+	
+	\item[Car Graphic] Depending on the chosen back-projection method the server stays responsible for the drawing of the car's position on the real sandbox. Currently this is done by rendering a colored dot  at the position. As mentioned before this should be improved using \textit{openframeworks} capabilities e.g. by using a sprite or a simple vector drawing.
+	
+	\item[Car Physics] The current car physics are based on a lifted street car. Values like weight and bouncyness need to be adjusted to get a fun dune buggy driving experience. The vehicle example from the \textit{Unreal} engine might serve as an example.
+	
+	\item[Actual Gameplay] For this project to be called a game actual gameplay needs to be implemented. The current sandbox experience (both meanings intended) hardly qualifies as a game experience, at least for the driving player. The sandbox players still have a sandbox to play around in, no matter what happens on the digital side. Features like pickups, objectives or racetrack generation may facilitate a better game experience.
+	
+	\item[Sand Movement Smoothing/Hiding] At the current state the change of the sand surface on the client happens in a very jerky and sudden fashion. Also short-lived spikes in the surface like the erroneous detection of the sandbox player's body parts as the sand surface are rendered in full. This could be avoided if the changes are applied gradually. Only a small part of the delta height between the current surface and the target heights could be applied in each terrain update. This would hide sudden spikes and likely reduce the jerkiness of the transitions. Another way to hide big sand movements would be to only apply them when the targeted regions not in view. 
+\end{description}
 
 \subsection{Back-Projection}
 \label{ch:backProjection}
@@ -203,20 +219,6 @@ two client solution
 the whole game was build in single player
 not enouth experience to split it in short time
 
-\subsection{Improvements}
-Was only a single person
-
-buggy graphic, sprite or drawing instead of dot
-
-smoothing between transitons buggy/sand
-only do (big) changes of terrain when not in view
-
-pick ups
-
-car physics
-
-raceing game stuff 
-
 
 \subsection{Ethical Concerns}
 vs. natural interaction (traditional sandbox), tech/advancemend allways good?
@@ -225,6 +227,7 @@ racial body issues, handicaped people
 
 more and more technologial playground ->higher entrance borders - body, monetary issues -> more exclusive 
 
+one against many - more drivers
 
 \section{Conclusion}
 
