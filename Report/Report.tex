@@ -136,7 +136,7 @@ In addition to the actual server a dummy server was build. It is basically a sta
 \begin{figure}
 	\centering
 	\includegraphics[width=0.8\linewidth]{figures/sandboxHeightShade}
-	\caption{Rendered height map on the client using a height color shader. The vertical lines in the terrain are an artifact of the sandbox application, possibly cause by the too low resolution of the \textit{Kinnect}.}
+	\caption{Rendered height map on the client using a height color shader. The vertical lines in the terrain are artifacts of the sandbox application, possibly caused by the too low resolution of the \textit{Kinect}'s depth sensors.}
 	\label{fig:sandboxheightshade}
 \end{figure}
 
@@ -165,10 +165,10 @@ For a proof-of-concept back-projection which will be later discussed in chapter 
 To test the game in VR, the VR assets were downloaded from the \textit{Unity Asset Store} and put into the game. They worked without an issue and allowed to take a first glimpse of how a finished game may look. 
  
 
-\subsection{Protocol}
+\subsection{Protocols}
 \label{ch:protocol}
-The used protocol to transmit the height map were an adaptation of the one used in the previous work. But instead of sending chars of digits the full range of a byte was used and the header shrunk to a single leading byte. In addition to that there was a similar protocol for the transmission of the player's car position.  
-Both protocols only support maps of the size 640 times 480 pixel/units.
+The used protocol to transmit the height map was an adaptation of the one used in the previous work. But instead of sending chars of digits the full range of a byte was used and the header shrunk to a single leading byte. In addition to that there has been devised a similar protocol for the transmission of the player's car position.  
+Both protocols only support maps/positions of the size 640 times 480 pixel/units.
 
 \subsubsection{Height Map Protocol}
 To request map data from the server the client sends a single byte, called leading byte in the code comments, containing the number "2" at port 9966 over TCP. Upon receiving this byte, the server transforms the float height values of the height map into the range 0 to 255. Now fitting into a byte, the height values are send row by row over the network. On the other end, the client receives the values, puts the map together and processes it. 
@@ -229,19 +229,15 @@ There are several methods to get the information about the current status of the
 \end{description}
 
 \subsection{Ethical Concerns}
-vs. natural interaction (traditional sandbox), tech/advancemend allways good?
+A concern with this technology is the possible exclusion of people who are not thought of while building it. One example could be people with a darker and thereby harder to digitally capture skin color. But to my knowledge there are no such problems with the \textit{Kinect}. Another group of people who might be affected are persons with disabilities. If the disability is affecting the ability to play with sand e.g. because they depend on sensitive medical equipment or can not use VR headsets e.g. because of visual aides, this technology might exclude them. On the other hand, the heterogeneous nature of the multilayer parts, sandbox and driving in VR, might allow persons who could normally not play together to do so. For example the driver's client setup could be placed inside a sterile intensive care unit of a child hospital and the sandbox part could be placed on the visitor side of said unit. This would allow to children to play with their sick friend even though they are not allowed to be in the same room. Actually through the augmented reality nature of the technology it might feel a bit like they are interacting with each other physically.  
 
-racial body issues, handicaped people
+However, the heterogeneous nature of the multilayer might also facilitate negative emotions. In the current version only one player can be the driver all other players are left with the sandbox. If more than one of the players want to be the driver conflicts may arise, especially when the game is aimed at younger children. Then again, this might allow them to learn a valuable lesson about sharing and taking turns. Also, multiple drivers could be integrated in the game making the drivers position less special. However this would increase the already high cost of the hardware setup.
 
-more and more technologial playground ->higher entrance borders - body, monetary issues -> more exclusive 
-
-one against many - more drivers
+Which is another important point. One might see this work and AR sandboxes in general as an improvement of the traditional sandbox. Which probably not true as this limits the freedom of play drastically. But nonetheless this is a new take on the traditional sandbox and people might see new as automatically better. However the financial burden which needs to be taken to setup this system should not be taken lightly. Not every school or museum would be able to buy and sustain such a system. Thereby, excluding children who are from less fortunate neighborhoods from this new technology. This argument might not hold for Norway but for countries which pay less attention to equivalent opportunities in children upbringing it still might be true.  However, this is an argument against every not cheap toy. In my opinion should this issue not be fought by refraining from producing expensive systems for children but on other fronts which are out of scope of this report.
 
 \section{Conclusion}
-
-will continue, at least for feature jam
-fun project
-will ask pb museum if they want sandbox
+This was a fun project in which I learned much about serialization, TCP connections,  \textit{openframeworks}, time and task management and AR sandboxes. I will continue to work on this project at least for the completion of my feature game. Maybe if I have time and a specific feature is looking especially worthwhile (like better car graphics) I might even continue on it without being rewarded points for it.
+Additionally once I am back home in Paderborn,Germany, I will ask the local Heinz Nixdorf MuseumsForum, which is the self-proclaimed biggest computer museum in the world, whether they want me to help them setup an AR Sandbox. Since I am convinced that this is a fun and engaging technology which a technology museum should have. Also in my opinion their AR/VR section was in need of an expansion when I went there the last time. 
 
 
 % ************************************************************
